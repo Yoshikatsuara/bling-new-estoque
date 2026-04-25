@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -m py_compile app.py)",
+      "Bash(python3 -m py_compile core/__init__.py)",
+      "Bash(python3 -m py_compile core/bling.py)",
+      "Bash(python3 -m py_compile core/config.py)",
+      "Bash(python3 -m py_compile core/helpers.py)",
+      "Bash(py -m py_compile app.py)",
+      "Bash(py -m py_compile core/__init__.py)",
+      "Bash(py -m py_compile core/bling.py)",
+      "Bash(py -m py_compile core/config.py)",
+      "Bash(py -m py_compile core/helpers.py)",
+      "Bash(where python *)",
+      "Bash(where python3 *)",
+      "Bash(where py *)",
+      "Read(//c/Users/Daniel/AppData/Local/Programs/**)",
+      "Bash(ls /c/Python*)",
+      "Bash(/c/Python314/python.exe -m py_compile app.py)",
+      "Bash(/c/Python314/python.exe -m py_compile core/__init__.py)",
+      "Bash(/c/Python314/python.exe -m py_compile core/bling.py)",
+      "Bash(/c/Python314/python.exe -m py_compile core/config.py)",
+      "Bash(/c/Python314/python.exe -m py_compile core/helpers.py)",
+      "Bash(/c/Python314/python.exe -m py_compile core/sheets.py)",
+      "Bash(python *)"
+    ]
+  }
+}

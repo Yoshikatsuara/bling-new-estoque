@@ -1,0 +1,30 @@
+# Credenciais e tokens (NUNCA commitar)
+credenciais.json
+bling_token.json
+.streamlit/secrets.toml
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Streamlit
+.streamlit/cache/
+
+# CSVs gerados
+estoque_*.csv
