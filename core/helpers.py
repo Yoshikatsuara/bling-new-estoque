@@ -1,52 +1,47 @@
 """
-Utilitários diversos: cálculo de semana, dias úteis, formatações.
+Funções auxiliares compartilhadas entre páginas.
 """
 
-from datetime import date, datetime
+from datetime import datetime
+
 import pandas as pd
 
-from core.config import FERIADOS_2026
+# ==========================================
+# FERIADOS
+# ==========================================
 
-MESES_ABREV = {
-    1: "Jan", 2: "Fev", 3: "Mar", 4: "Abr", 5: "Mai", 6: "Jun",
-    7: "Jul", 8: "Ago", 9: "Set", 10: "Out", 11: "Nov", 12: "Dez"
-}
+FERIADOS_2026 = pd.to_datetime([
+    "2026-04-03", "2026-04-21", "2026-05-01", "2026-06-04",
+    "2026-09-07", "2026-10-12", "2026-11-02", "2026-11-15",
+    "2026-11-20", "2026-12-25",
+])
 
-
-def semana_do_mes(d: date) -> str:
-    """'Semana 3' a partir do dia do mês."""
-    semana = (d.day - 1) // 7 + 1
-    return f"Semana {semana}"
-
-
-def semana_label(d) -> str:
-    """'W3 Abr/2026' — formato usado na planilha de projeção."""
-    d = pd.Timestamp(d)
-    return f"W{(d.day - 1) // 7 + 1} {MESES_ABREV[d.month]}/{d.year}"
-
-
-def gerar_dias_uteis(inicio: str = "2026-04-17", fim: str = "2026-12-31", extras: list = None) -> pd.DatetimeIndex:
-    """
-    Gera DatetimeIndex com dias úteis do período (exclui fins de semana e feriados).
-
-    Args:
-        extras: lista de strings 'YYYY-MM-DD' com sábados/domingos trabalhados
-    """
-    feriados = pd.to_datetime(FERIADOS_2026)
-    todos = pd.date_range(start=inicio, end=fim, freq="B")  # B = business days
-    uteis = [d for d in todos if d not in feriados]
-    if extras:
-        uteis = sorted(set(uteis) | set(pd.to_datetime(extras)))
-    return pd.DatetimeIndex(uteis)
-
-
-def formatar_data_br(d) -> str:
-    """Converte pra formato brasileiro dd/mm/yyyy."""
-    if isinstance(d, str):
-        return d
-    return d.strftime("%d/%m/%Y")
+# ==========================================
+# FUNÇÕES
+# ==========================================
 
 
 def agora_br() -> str:
-    """Timestamp atual em formato brasileiro."""
-    return datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    return datetime.now().strftime("%d/%m/%Y %H:%M")
+
+
+def semana_do_mes(data) -> str:
+    d = pd.Timestamp(data)
+    return f"S{(d.day - 1) // 7 + 1}"
+
+
+def semana_label(d) -> str:
+    meses = {
+        1: "Jan", 2: "Fev", 3: "Mar", 4: "Abr", 5: "Mai", 6: "Jun",
+        7: "Jul", 8: "Ago", 9: "Set", 10: "Out", 11: "Nov", 12: "Dez",
+    }
+    d = pd.Timestamp(d)
+    return f"W{(d.day - 1) // 7 + 1} {meses[d.month]}/{d.year}"
+
+
+def gerar_dias_uteis(extras=None):
+    todos = pd.date_range(start="2026-04-17", end="2026-12-31", freq="B")
+    uteis = [d for d in todos if d not in FERIADOS_2026]
+    if extras:
+        uteis = sorted(set(uteis) | set(pd.to_datetime(extras)))
+    return pd.DatetimeIndex(uteis)

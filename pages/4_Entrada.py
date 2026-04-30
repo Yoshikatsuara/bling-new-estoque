@@ -1,12 +1,8 @@
 """
-Página: Análise de Consumo.
+Página: Entrada de Embalagens.
 Pivots diário e semanal + gráficos.
 
-Fonte de dados: core/dados.py → Controle_Estoque (Tipo = Consumo)
-
-Regra:
-- Cada linha no Controle_Estoque com Tipo = Consumo já tem a quantidade bruta.
-- Não há cálculo de diferença entre snapshots.
+Fonte de dados: core/dados.py → Controle_Estoque (Tipo = Entrada)
 """
 
 import pandas as pd
@@ -29,14 +25,12 @@ from utils.theme import CORES, LAYOUT_PLOTLY, aplicar_tema
 # SETUP
 # ==========================================
 
-st.set_page_config(
-    page_title="Consumo · Frutifica", page_icon="📉", layout="wide"
-)
+st.set_page_config(page_title="Entrada · Frutifica", page_icon="📦", layout="wide")
 aplicar_tema()
 
-TIPO = "Consumo"
-COR_PRINCIPAL = "#4ade80"
-CMAP = "Greens"
+TIPO = "Entrada"
+COR_PRINCIPAL = "#38bdf8"
+CMAP = "Blues"
 
 # ==========================================
 # ESTADO
@@ -49,7 +43,7 @@ if "dias_extras" not in st.session_state:
 # SIDEBAR
 # ==========================================
 
-render_sidebar_header("📉 Consumo", "Frutifica · I9")
+render_sidebar_header("📦 Entrada", "Frutifica · I9")
 
 with st.sidebar:
     atualizar = st.button("🔄 Atualizar dados", use_container_width=True)
@@ -66,15 +60,10 @@ with st.sidebar:
     st.divider()
     st.markdown("**Dias extras de reposição**")
     st.caption("Sábados/domingos trabalhados")
-    dia_extra = st.date_input(
-        "Data", value=None, label_visibility="collapsed"
-    )
+    dia_extra = st.date_input("Data", value=None, label_visibility="collapsed")
 
     if st.button("➕ Adicionar dia", use_container_width=True):
-        if (
-            dia_extra
-            and str(dia_extra) not in st.session_state["dias_extras"]
-        ):
+        if dia_extra and str(dia_extra) not in st.session_state["dias_extras"]:
             st.session_state["dias_extras"].append(str(dia_extra))
             st.success(f"{dia_extra.strftime('%d/%m/%Y')} adicionado!")
 
@@ -89,7 +78,6 @@ with st.sidebar:
 
 if atualizar:
     sheets.invalidar_cache()
-    st.cache_data.clear()
 
 with st.spinner("Carregando..."):
     df_estoque = carregar_controle_estoque()
@@ -112,9 +100,7 @@ def pivot_diario(df_mov: pd.DataFrame) -> pd.DataFrame:
 
         dias_uteis_set = set(pd.DatetimeIndex(DIAS_UTEIS).normalize())
         datas_validas = sorted(
-            d
-            for d in df_t["Data"].dropna().unique()
-            if d in dias_uteis_set
+            d for d in df_t["Data"].dropna().unique() if d in dias_uteis_set
         )
 
         pivot = df_t.pivot_table(
@@ -125,16 +111,12 @@ def pivot_diario(df_mov: pd.DataFrame) -> pd.DataFrame:
             fill_value=0,
         )
         pivot = pivot.reindex(
-            index=EMBALAGENS_ORDEM,
-            columns=datas_validas,
-            fill_value=0,
+            index=EMBALAGENS_ORDEM, columns=datas_validas, fill_value=0
         )
 
     pivot.index = [EMBALAGENS_LABELS.get(e, e) for e in pivot.index]
     pivot.index.name = "Embalagem"
-    pivot.columns = [
-        pd.Timestamp(d).strftime("%d/%m") for d in pivot.columns
-    ]
+    pivot.columns = [pd.Timestamp(d).strftime("%d/%m") for d in pivot.columns]
     pivot.insert(0, "TOTAL", pivot.sum(axis=1))
     return pivot
 
@@ -144,9 +126,7 @@ def pivot_semanal(df_mov: pd.DataFrame) -> pd.DataFrame:
     semanas_ord = list(dict.fromkeys(semana_map.values()))
 
     if df_mov.empty:
-        pivot = pd.DataFrame(
-            0, index=EMBALAGENS_ORDEM, columns=semanas_ord
-        )
+        pivot = pd.DataFrame(0, index=EMBALAGENS_ORDEM, columns=semanas_ord)
     else:
         df_t = df_mov.copy()
         df_t["Semana"] = df_t["Data"].map(
@@ -160,9 +140,7 @@ def pivot_semanal(df_mov: pd.DataFrame) -> pd.DataFrame:
             fill_value=0,
         )
         pivot = pivot.reindex(
-            index=EMBALAGENS_ORDEM,
-            columns=semanas_ord,
-            fill_value=0,
+            index=EMBALAGENS_ORDEM, columns=semanas_ord, fill_value=0
         )
 
     pivot.index = [EMBALAGENS_LABELS.get(e, e) for e in pivot.index]
@@ -175,46 +153,42 @@ def pivot_semanal(df_mov: pd.DataFrame) -> pd.DataFrame:
 # CONTEÚDO
 # ==========================================
 
-render_header(
-    "📉 Consumo de Embalagens", "Diário e semanal · Frutifica · I9"
-)
+render_header("📦 Entrada de Embalagens", "Diário e semanal · Frutifica · I9")
 
-if df_mov.empty:
-    render_empty_state(
-        "📭", "Nenhum consumo encontrado na aba Controle_Estoque."
-    )
+if df_estoque.empty:
+    render_empty_state("📭", "Nenhum dado na aba Controle_Estoque.")
     st.stop()
 
 # ==========================================
 # MÉTRICAS
 # ==========================================
 
-total = int(df_mov["Quantidade"].sum())
-dias_n = df_mov["Data"].nunique()
+total = int(df_mov["Quantidade"].sum()) if not df_mov.empty else 0
+dias_n = df_mov["Data"].nunique() if not df_mov.empty else 0
 
 emb_top = "—"
-top = df_mov.groupby("Codigo")["Quantidade"].sum()
-if not top.empty and top.max() > 0:
-    emb_top = EMBALAGENS_LABELS.get(top.idxmax(), "—").split(":")[0]
+if not df_mov.empty:
+    top = df_mov.groupby("Codigo")["Quantidade"].sum()
+    if not top.empty and top.max() > 0:
+        emb_top = EMBALAGENS_LABELS.get(top.idxmax(), "—").split(":")[0]
 
 c1, c2, c3 = st.columns(3)
 with c1:
-    render_metric(f"{total:,}".replace(",", "."), "Total consumido (un.)")
+    render_metric(f"{total:,}".replace(",", "."), "Total recebido (un.)")
 with c2:
     render_metric(str(dias_n), "Dias com lançamento")
 with c3:
-    render_metric(emb_top, "Mais consumida")
+    render_metric(emb_top, "Mais recebida")
 
 st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 st.divider()
 
 # ==========================================
-# CONSUMO DIÁRIO
+# ENTRADA DIÁRIA
 # ==========================================
 
 st.markdown(
-    "<div class='section-title'>Consumo Diário</div>",
-    unsafe_allow_html=True,
+    "<div class='section-title'>Entrada Diária</div>", unsafe_allow_html=True
 )
 
 pivot_d = pivot_diario(df_mov)
@@ -222,9 +196,7 @@ pivot_d = pivot_diario(df_mov)
 if mes_sel:
     meses_filtro = [MESES_NUM[m] for m in mes_sel]
     cols_vis = ["TOTAL"] + [
-        c
-        for c in pivot_d.columns
-        if c != "TOTAL" and c[3:5] in meses_filtro
+        c for c in pivot_d.columns if c != "TOTAL" and c[3:5] in meses_filtro
     ]
     pivot_d_view = pivot_d[cols_vis]
 else:
@@ -239,13 +211,12 @@ st.dataframe(
 )
 
 # ==========================================
-# CONSUMO SEMANAL
+# ENTRADA SEMANAL
 # ==========================================
 
 st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
 st.markdown(
-    "<div class='section-title'>Consumo Semanal</div>",
-    unsafe_allow_html=True,
+    "<div class='section-title'>Entrada Semanal</div>", unsafe_allow_html=True
 )
 
 pivot_s = pivot_semanal(df_mov)
@@ -264,8 +235,7 @@ st.dataframe(
 
 st.divider()
 st.markdown(
-    "<div class='section-title'>Visualizações</div>",
-    unsafe_allow_html=True,
+    "<div class='section-title'>Visualizações</div>", unsafe_allow_html=True
 )
 
 # Gráfico 1 — Barras empilhadas semanais
@@ -286,57 +256,57 @@ if not pivot_s_plot.empty and pivot_s_plot.shape[1] > 0:
     fig1.update_layout(
         **LAYOUT_PLOTLY,
         barmode="stack",
-        title="Consumo Semanal por Embalagem",
+        title="Entrada Semanal por Embalagem",
         height=400,
     )
     st.plotly_chart(fig1, use_container_width=True)
 
 # Gráfico 2 — Total por embalagem horizontal
-totais = df_mov.groupby("Codigo")["Quantidade"].sum()
-totais = totais.reindex(EMBALAGENS_ORDEM, fill_value=0)
-totais.index = [
-    EMBALAGENS_LABELS.get(e, e).split(":")[0] for e in totais.index
-]
-totais = totais[totais > 0].sort_values()
+if not df_mov.empty:
+    totais = df_mov.groupby("Codigo")["Quantidade"].sum()
+    totais = totais.reindex(EMBALAGENS_ORDEM, fill_value=0)
+    totais.index = [EMBALAGENS_LABELS.get(e, e).split(":")[0] for e in totais.index]
+    totais = totais[totais > 0].sort_values()
 
-if not totais.empty:
-    fig2 = go.Figure(
-        go.Bar(
-            x=totais.values,
-            y=totais.index,
-            orientation="h",
-            marker_color=COR_PRINCIPAL,
-            text=[f"{v:,}".replace(",", ".") for v in totais.values],
-            textposition="outside",
-            textfont=dict(color="#94a3b8", size=11),
+    if not totais.empty:
+        fig2 = go.Figure(
+            go.Bar(
+                x=totais.values,
+                y=totais.index,
+                orientation="h",
+                marker_color=COR_PRINCIPAL,
+                text=[f"{v:,}".replace(",", ".") for v in totais.values],
+                textposition="outside",
+                textfont=dict(color="#94a3b8", size=11),
+            )
         )
-    )
-    fig2.update_layout(
-        **LAYOUT_PLOTLY,
-        title="Total Consumido por Embalagem",
-        height=380,
-        margin=dict(l=20, r=80, t=40, b=20),
-    )
-    st.plotly_chart(fig2, use_container_width=True)
+        fig2.update_layout(
+            **LAYOUT_PLOTLY,
+            title="Total Recebido por Embalagem",
+            height=380,
+            margin=dict(l=20, r=80, t=40, b=20),
+        )
+        st.plotly_chart(fig2, use_container_width=True)
 
 # Gráfico 3 — Linha temporal diária
-linha = df_mov.groupby("Data")["Quantidade"].sum().reset_index()
-linha.columns = ["Data", "Consumo"]
+if not df_mov.empty:
+    linha = df_mov.groupby("Data")["Quantidade"].sum().reset_index()
+    linha.columns = ["Data", "Entrada"]
 
-fig3 = go.Figure(
-    go.Scatter(
-        x=linha["Data"],
-        y=linha["Consumo"],
-        mode="lines+markers",
-        line=dict(color=COR_PRINCIPAL, width=2),
-        marker=dict(size=6, color=COR_PRINCIPAL),
-        fill="tozeroy",
-        fillcolor="rgba(74,222,128,0.08)",
+    fig3 = go.Figure(
+        go.Scatter(
+            x=linha["Data"],
+            y=linha["Entrada"],
+            mode="lines+markers",
+            line=dict(color=COR_PRINCIPAL, width=2),
+            marker=dict(size=6, color=COR_PRINCIPAL),
+            fill="tozeroy",
+            fillcolor="rgba(56,189,248,0.08)",
+        )
     )
-)
-fig3.update_layout(
-    **LAYOUT_PLOTLY,
-    title="Consumo Diário Total",
-    height=350,
-)
-st.plotly_chart(fig3, use_container_width=True)
+    fig3.update_layout(
+        **LAYOUT_PLOTLY,
+        title="Entrada Diária Total",
+        height=350,
+    )
+    st.plotly_chart(fig3, use_container_width=True)

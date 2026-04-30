@@ -1,62 +1,48 @@
 """
-Constantes centralizadas do projeto.
-Mudou depósito, embalagem, ID de planilha? Muda aqui e propaga pra todas as páginas.
+Configurações centrais do sistema Frutifica.
+Fonte única de constantes usadas por todas as páginas.
 """
 
-import streamlit as st
-
 # ==========================================
-# GOOGLE SHEETS
+# PLANILHA
 # ==========================================
 
 SPREADSHEET_ID = "1YznbVsWCjzm9U7j-iGqD17Gj4F-8kFcFhHcGQbcOjXg"
 JSON_CREDENTIALS = "credenciais.json"
 
-# Nomes das abas
+def get_spreadsheet_id():
+    return SPREADSHEET_ID
+
 ABA_CONTROLE_ESTOQUE = "Controle_Estoque"
-ABA_MOVIMENTACOES = "Movimentacoes"
-ABA_BOM = "BOM"  # Ficha técnica (futuro)
+ABA_SALDO_INICIAL = "Saldo_Inicial"
 
-# ==========================================
-# BLING API
-# ==========================================
+# Cabeçalho padrão do Controle_Estoque (inclui Tipo e Canal)
+CABECALHO_CONTROLE_ESTOQUE = [
+    "Codigo",
+    "Descricao",
+    "Unidade",
+    "Preco (R$)",
+    "Estoque Fisico",
+    "Estoque Virtual",
+    "Situacao",
+    "Tipo",              # "Consumo" ou "Entrada"
+    "Canal",             # "I9", "Montagem", "Estoque"
+    "Data Relatorio",
+    "Atualizado em",
+]
 
-TOKEN_FILE = "bling_token.json"
-REDIRECT_URI = "http://localhost:8080"
-
-BLING_API_BASE = "https://www.bling.com.br/Api/v3"
-
-# ==========================================
-# DEPÓSITOS
-# ==========================================
-
-DEPOSITOS = {
-    "TODOS": None,
-    "EXPEDICAO": 10968231680,
-    "ESTOQUE FRUTIFICA": 8443864433,
-    "ESTOQUE ARMAZEM": 14886735791,
-    "ESTOQUE PLASTICO": 14888296600,
-    "COZINHA": 9057073796,
-    "ESTOQUE ESCRITORIO": 14886696923,
-    "ESTOQUE MANUTENCAO": 14886721328,
-    "ESTOQUE MONTAGEM": 14887751954,
-}
+CABECALHO_SALDO_INICIAL = ["Codigo", "Saldo_Inicial", "Data_Base", "Data_Definicao"]
 
 # ==========================================
 # EMBALAGENS
 # ==========================================
 
-EMBALAGENS_CODIGOS = [
-    "EMB108", "EMB109", "EMB110", "EMB111",
-    "EMB112", "EMB113", "EMB114", "EMB115",
-    "EMB116", "EMB_ETQ"
-]
-
-# Ordem de apresentação (prioridade)
 EMBALAGENS_ORDEM = [
     "EMB116", "EMB115", "EMB109", "EMB108", "EMB110",
-    "EMB111", "EMB112", "EMB113", "EMB114", "EMB_ETQ"
+    "EMB111", "EMB112", "EMB113", "EMB114", "EMB_ETQ",
 ]
+
+EMBALAGENS_CODIGOS = EMBALAGENS_ORDEM  # alias
 
 EMBALAGENS_LABELS = {
     "EMB116": "EMB116: BANDEJA ROSA I9",
@@ -72,46 +58,27 @@ EMBALAGENS_LABELS = {
 }
 
 # ==========================================
-# FUNÇÕES DE ACESSO A CREDENCIAIS
-# ==========================================
-
-def get_bling_credentials() -> tuple:
-    """Retorna (client_id, client_secret) do st.secrets. Falha explicitamente se ausente."""
-    try:
-        return st.secrets["bling"]["client_id"], st.secrets["bling"]["client_secret"]
-    except (KeyError, FileNotFoundError) as e:
-        raise RuntimeError(
-            "Credenciais do Bling não configuradas. "
-            "Defina [bling] client_id e client_secret em .streamlit/secrets.toml"
-        ) from e
-
-
-def get_spreadsheet_id() -> str:
-    """Retorna o ID da planilha do st.secrets, com fallback para a constante SPREADSHEET_ID."""
-    try:
-        return st.secrets["sheets"]["spreadsheet_id"]
-    except (KeyError, FileNotFoundError):
-        return SPREADSHEET_ID
-
-
-# ==========================================
-# MOVIMENTAÇÃO
+# TIPOS E CANAIS
 # ==========================================
 
 TIPOS_MOVIMENTACAO = ["Consumo", "Entrada"]
+
 CANAIS = ["I9", "Montagem", "Estoque"]
 
-
 # ==========================================
-# CALENDÁRIO 2026
+# DATAS
 # ==========================================
-
-FERIADOS_2026 = [
-    "2026-04-03", "2026-04-21", "2026-05-01", "2026-06-04",
-    "2026-09-07", "2026-10-12", "2026-11-02", "2026-11-15",
-    "2026-11-20", "2026-12-25",
-]
 
 MESES_NUM = {
-    "Abril 2026": "04", "Maio 2026": "05", "Junho 2026": "06",
-    "Julho 2026": "07", "Agosto 2026": "08", "Setembro 2026
+    "Abril 2026": "04",
+    "Maio 2026": "05",
+    "Junho 2026": "06",
+    "Julho 2026": "07",
+    "Agosto 2026": "08",
+    "Setembro 2026": "09",
+    "Outubro 2026": "10",
+    "Novembro 2026": "11",
+    "Dezembro 2026": "12",
+}
+
+ALERTA_ESTOQUE_BAIXO = 500  # unidades
