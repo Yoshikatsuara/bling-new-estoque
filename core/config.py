@@ -7,6 +7,8 @@ Fonte única de constantes usadas por todas as páginas.
 # PLANILHA
 # ==========================================
 
+import streamlit as st
+
 SPREADSHEET_ID = "1YznbVsWCjzm9U7j-iGqD17Gj4F-8kFcFhHcGQbcOjXg"
 JSON_CREDENTIALS = "credenciais.json"
 
@@ -82,3 +84,22 @@ MESES_NUM = {
 }
 
 ALERTA_ESTOQUE_BAIXO = 500  # unidades
+
+# ==========================================
+# BLING API
+# ==========================================
+
+BLING_API_BASE = "https://api.bling.com.br/Api/v3"
+REDIRECT_URI = "https://bling-new-estoque.streamlit.app"
+TOKEN_FILE = "bling_token.json"
+
+def get_bling_credentials():
+    """Retorna (client_id, client_secret) do Bling."""
+    try:
+        return st.secrets["bling"]["client_id"], st.secrets["bling"]["client_secret"]
+    except Exception:
+        # Fallback local
+        import json
+        with open("credenciais.json") as f:
+            creds = json.load(f)
+        return creds["client_id"], creds["client_secret"]
